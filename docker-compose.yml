@@ -1,0 +1,118 @@
+# ARIX — ИИ-менеджер клиники. Полный стек одной командой:
+#   cp .env.example .env && make demo
+#
+# Профили:
+#   (по умолчанию) postgres, redis, backend, worker, waweb, frontend
+#   tools          — миграции и сиды (запускаются один раз)
+
+name: arix-clinic
+
+x-backend-env: &backend-env
+  env_file: [.env]
+  environment:
+    DATABASE_URL: postgresql+asyncpg://${POSTGRES_USER:-arix_app}:${POSTGRES_PASSWORD:-arix}@postgres:5432/${POSTGRES_DB:-arix}
+    REDIS_URL: redis://redis:6379/0
+    WA_BAILEYS_URL: http://waweb:3000
+    VERTICAL: clinic
+
+services:
+  postgres:
+    # pgvector image: the KB works on full-text + trigram out of the box and
+    # can switch to embeddings without rebuilding the database.
+    image: pgvector/pgvector:pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-arix}
+      # Passed to init-db.sql, which creates the non-superuser app role that
+      # row level security depends on.
+      ARIX_APP_USER: ${POSTGRES_USER:-arix_app}
+      ARIX_APP_PASSWORD: ${POSTGRES_PASSWORD:-arix}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/10-init-db.sql:ro
+    ports: ["${POSTGRES_PORT:-5432}:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d ${POSTGRES_DB:-arix}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes: [redisdata:/data]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  migrate:
+    build: ./backend
+    profiles: ["tools"]
+    <<: *backend-env
+    command: ["python", "-m", "alembic", "upgrade", "head"]
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  seed:
+    build: ./backend
+    profiles: ["tools"]
+    <<: *backend-env
+    command: ["python", "-m", "arix.cli", "seed-demo"]
+    depends_on:
+      postgres: {condition: service_healthy}
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    <<: *backend-env
+    # The API applies migrations on boot so `docker compose up` is enough for
+    # a demo; in production run the `migrate` service separately instead.
+    command: >
+      sh -c "python -m alembic upgrade head &&
+             uvicorn arix.main:app --host 0.0.0.0 --port 8000 --proxy-headers"
+    ports: ["${BACKEND_PORT:-8000}:8000"]
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+
+  worker:
+    build: ./backend
+    restart: unless-stopped
+    <<: *backend-env
+    command: ["python", "-m", "arix.scheduler.worker"]
+    depends_on:
+      backend: {condition: service_started}
+      postgres: {condition: service_healthy}
+
+  waweb:
+    build: ./waweb
+    restart: unless-stopped
+    environment:
+      PORT: 3000
+      ARIX_BACKEND_URL: http://backend:8000
+      WA_BAILEYS_TOKEN: ${WA_BAILEYS_TOKEN:-baileys-shared-token}
+      WA_WEBHOOK_SECRET: ${WA_WEBHOOK_SECRET:-wa-webhook-secret}
+      WA_AUTH_DIR: /data/sessions
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    volumes: [wasessions:/data/sessions]
+    ports: ["${WAWEB_PORT:-3001}:3000"]
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE: ${PUBLIC_API_BASE:-http://localhost:8000}
+    restart: unless-stopped
+    ports: ["${FRONTEND_PORT:-3000}:80"]
+    depends_on:
+      backend: {condition: service_started}
+
+volumes:
+  pgdata:
+  redisdata:
+  wasessions:

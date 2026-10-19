@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Node
+node_modules/
+dist/
+*.tsbuildinfo
+
+# Local config and data — never commit real tokens or patient data
+.env
+.env.*
+!.env.example
+*.sqlite3
+/data/
+/backend/uploads/
+/waweb/data/
+sessions/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+
+# Artefacts
+eval-report.json
+*.log

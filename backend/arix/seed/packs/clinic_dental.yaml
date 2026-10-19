@@ -1,0 +1,351 @@
+# Dental clinic template (ТЗ §11). Everything here is tenant config + seed data,
+# no code. Prices are placeholders and are overwritten by the clinic's import.
+meta:
+  code: clinic_dental
+  vertical: clinic
+  title: Стоматология
+  rubrics: [стоматология, стоматологическая клиника, dental, тіс, стоматолог]
+
+config:
+  currency: KZT
+  quiet_hours: "21:00-09:00"
+  owner_report_at: "08:00"
+  working_hours:
+    mon-sat: "09:00-20:00"
+    sun: "off"
+  agent:
+    tone: коротко, тепло, по делу; без канцелярита и эмодзи-спама
+    slots_to_offer: 3
+    max_confusion: 2
+  features:
+    followup: true
+    recall: true
+    reviews: true
+    waitlist: false
+    miniapp_payments: false
+    treatment_plans: false
+    voice_stt: true
+    doctor_bot: true
+  reminders:
+    visit_offsets_h: [-24, -2]
+    call_task_before_h: 3
+    early_morning_send_at: "08:00"
+  followup:
+    offsets_h: [1, 24, 72]
+    max_touches: 3
+  recall:
+    lead_days: 7
+    dormant_months_from: 9
+    dormant_months_to: 12
+  reviews:
+    delay_h: 2
+    promote_from_score: 5
+    alert_up_to_score: 3
+  handoff:
+    pickup_minutes: 10
+    escalate_minutes: 30
+  red_flags:
+    ru: [щека опухла, не могу жевать, выбил зуб, шатается зуб после удара, десна гноится]
+
+services:
+  - code: consult
+    name: {ru: Консультация стоматолога, kz: Стоматолог кеңесі}
+    category: Консультации
+    price_from: 5000
+    price_to: 5000
+    duration_min: 30
+    buffer_min: 5
+    online_bookable: true
+    complaint_keywords: [консультация, осмотр, посмотреть, не знаю что]
+    sort: 1
+  - code: hygiene
+    name: {ru: Профессиональная гигиена, kz: Кәсіби гигиена}
+    category: Гигиена
+    price_from: 15000
+    price_to: 25000
+    duration_min: 60
+    buffer_min: 10
+    recall_days: 180
+    online_bookable: true
+    complaint_keywords: [чистка, гигиена, камень, налет, налёт, запах, кровоточат десны]
+    sort: 2
+  - code: filling
+    name: {ru: Лечение кариеса (пломба), kz: Тіс жегісін емдеу}
+    category: Лечение
+    price_from: 18000
+    price_to: 45000
+    duration_min: 60
+    buffer_min: 10
+    online_bookable: true
+    complaint_keywords: [кариес, дырка, пломба, скол, болит при сладком, чувствительность]
+    sort: 3
+  - code: endo
+    name: {ru: Лечение каналов, kz: Түтікшелерді емдеу}
+    category: Лечение
+    price_from: 45000
+    price_to: 90000
+    duration_min: 90
+    buffer_min: 15
+    needs_consultation_first: true
+    online_bookable: true
+    complaint_keywords: [ноет, пульпит, каналы, болит ночью, сильно болит зуб]
+    sort: 4
+  - code: extraction
+    name: {ru: Удаление зуба, kz: Тіс жұлу}
+    category: Хирургия
+    price_from: 20000
+    price_to: 60000
+    duration_min: 60
+    buffer_min: 15
+    online_bookable: true
+    complaint_keywords: [удалить, вырвать, зуб мудрости, восьмерка]
+    sort: 5
+  - code: implant
+    name: {ru: Имплантация, kz: Имплантация}
+    category: Имплантология
+    price_from: 250000
+    price_to: 450000
+    duration_min: 120
+    buffer_min: 30
+    recall_days: 180
+    needs_consultation_first: true
+    online_bookable: false
+    complaint_keywords: [имплант, нет зуба, вставить зуб, имплантация]
+    sort: 6
+  - code: ortho
+    name: {ru: Консультация ортодонта (брекеты), kz: Ортодонт кеңесі}
+    category: Ортодонтия
+    price_from: 7000
+    price_to: 7000
+    duration_min: 40
+    buffer_min: 10
+    needs_consultation_first: true
+    online_bookable: true
+    complaint_keywords: [брекеты, кривые зубы, выравнивание, элайнеры, прикус]
+    sort: 7
+  - code: whitening
+    name: {ru: Отбеливание, kz: Ағарту}
+    category: Эстетика
+    price_from: 60000
+    price_to: 120000
+    duration_min: 90
+    buffer_min: 10
+    online_bookable: true
+    complaint_keywords: [отбеливание, белые зубы, потемнели]
+    sort: 8
+
+doctors:
+  - name: Айгерим Б.
+    specialty: Терапевт-стоматолог
+    langs: [ru, kz]
+    services: [consult, hygiene, filling, endo, whitening]
+    schedule:
+      weekdays: [0, 1, 2, 3, 4, 5]
+      start: "09:00"
+      end: "18:00"
+      break: ["13:00", "14:00"]
+  - name: Ержан К.
+    specialty: Хирург-имплантолог
+    langs: [ru, kz]
+    services: [consult, extraction, implant]
+    schedule:
+      weekdays: [0, 2, 4]
+      start: "10:00"
+      end: "19:00"
+      break: ["14:00", "15:00"]
+  - name: Динара С.
+    specialty: Ортодонт
+    langs: [ru]
+    services: [consult, ortho]
+    schedule:
+      weekdays: [1, 3, 5]
+      start: "11:00"
+      end: "19:00"
+
+kb:
+  - type: address
+    question: "Где вы находитесь, как добраться?"
+    answer: "Адрес уточняется у администратора. Напишите, и я подскажу ориентиры и парковку."
+  - type: faq
+    question: "Какие часы работы?"
+    answer: "Пн-сб 09:00-20:00, воскресенье выходной."
+  - type: faq
+    question: "Нужна ли предоплата?"
+    answer: "Предоплата не нужна. Оплата после приёма, наличными или картой."
+    verbatim: true
+  - type: policy
+    question: "Можно ли отменить или перенести запись?"
+    answer: "Да, бесплатно, если предупредить минимум за 3 часа до приёма. Напишите сюда — перенесу."
+    verbatim: true
+  - type: prep
+    question: "Как готовиться к профгигиене?"
+    answer: "Особой подготовки не нужно. Почистите зубы перед визитом и не планируйте важных встреч сразу после — возможна лёгкая чувствительность 1-2 дня."
+  - type: prep
+    question: "Как готовиться к удалению зуба?"
+    answer: "Поешьте за 1-2 часа до приёма, не принимайте алкоголь за сутки. Если принимаете разжижающие кровь препараты — обязательно скажите администратору заранее."
+  - type: faq
+    question: "Делаете ли вы детям?"
+    answer: "Да, детский приём с 3 лет. Записывает администратор — передам ему."
+  - type: faq
+    question: "Больно ли лечить?"
+    answer: "Лечение проводится под местной анестезией. Про конкретные ощущения расскажет врач на приёме."
+  - type: faq
+    question: "Есть ли рассрочка?"
+    answer: "Условия рассрочки обсуждает администратор. Передам ваш вопрос."
+  - type: faq
+    question: "Работаете ли по страховке?"
+    answer: "Вопрос по страховке решает администратор — уточню и вернусь."
+  - type: faq
+    question: "Нужны ли документы?"
+    answer: "Для приёма достаточно удостоверения личности."
+  - type: faq
+    question: "Можно ли прийти без записи?"
+    answer: "Лучше записаться: без записи придётся ждать свободное окно. Подобрать время?"
+  - type: faq
+    question: "Сколько длится приём?"
+    answer: "Консультация 30 минут, лечение 60-90 минут в зависимости от услуги."
+  - type: faq
+    question: "Есть ли парковка?"
+    answer: "Парковка есть, уточните детали у администратора."
+  - type: policy
+    question: "Что делать при острой боли?"
+    answer: "При сильной боли, отёке, температуре или кровотечении не ждите записи: позвоните в клинику или в скорую 103. Я сразу передам администратору."
+    verbatim: true
+  - type: faq
+    question: "Можно ли оплатить картой?"
+    answer: "Да, принимаем карты и наличные."
+  - type: faq
+    question: "Есть ли гарантия на лечение?"
+    answer: "Условия гарантии зависят от услуги — их озвучит врач и зафиксирует в документах. Уточню у администратора."
+  - type: faq
+    question: "Нужно ли записываться заранее?"
+    answer: "Да, так вы точно попадёте в удобное время. Подобрать слот?"
+  - type: faq
+    question: "Сколько стоит консультация?"
+    answer: "Консультация стоматолога — 5 000 ₸, 30 минут. Точные цены всегда из прайса."
+  - type: faq
+    question: "Делаете ли рентген (снимок)?"
+    answer: "Снимок делаем на приёме, если врач сочтёт нужным. Стоимость уточнит администратор."
+  - type: faq
+    question: "Можно ли с ребёнком прийти вместе?"
+    answer: "Да, с ребёнком можно. Если приём нужен и ребёнку — скажите, подберу два окна."
+  - type: faq
+    question: "Принимаете ли по записи в выходные?"
+    answer: "В воскресенье мы не работаем, суббота — рабочий день до 20:00."
+  - type: faq
+    question: "Сколько врачей принимает?"
+    answer: "В клинике работают терапевт, хирург-имплантолог и ортодонт. Подскажу, кто нужен по вашему вопросу."
+  - type: faq
+    question: "Можно выбрать конкретного врача?"
+    answer: "Да, скажите имя врача — подберу его свободное время."
+  - type: faq
+    question: "Есть ли у вас детский стоматолог?"
+    answer: "Детский приём ведёт терапевт с 3 лет. Записывает администратор — передам ему."
+  - type: faq
+    question: "Нужно ли приходить заранее до приёма?"
+    answer: "Приходите за 5-10 минут, чтобы спокойно заполнить согласие."
+  - type: faq
+    question: "Что делать, если опаздываю?"
+    answer: "Напишите сюда — предупрежу врача. Если задержка больше 15 минут, возможно, придётся перенести."
+    verbatim: true
+  - type: policy
+    question: "Что если я не приду без предупреждения?"
+    answer: "Мы просто освободим время. Но если такое повторяется, администратор может попросить предоплату."
+    verbatim: true
+  - type: policy
+    question: "Можно ли вернуть деньги за лечение?"
+    answer: "Вопросы возврата решает руководитель клиники — передам ваше обращение ему."
+    verbatim: true
+  - type: faq
+    question: "Выдаёте ли справки и документы?"
+    answer: "Да, справку и договор выдаём на приёме. Для справки на работу скажите заранее."
+  - type: faq
+    question: "Можно ли оплатить лечение частями?"
+    answer: "Условия рассрочки обсуждает администратор — передам ваш вопрос."
+  - type: faq
+    question: "Работаете ли с беременными?"
+    answer: "Да, но обязательно скажите о сроке врачу до начала лечения."
+  - type: faq
+    question: "Я боюсь стоматологов, что делать?"
+    answer: "Скажите об этом врачу в начале приёма — он объяснит каждый шаг и сделает перерывы. Многие пациенты так приходят."
+  - type: faq
+    question: "Есть ли лечение во сне или под наркозом?"
+    answer: "Такие вопросы решает врач после осмотра. Передам администратору, он расскажет подробнее."
+  - type: prep
+    question: "Как готовиться к лечению каналов?"
+    answer: "Поешьте за 1-2 часа, приём длится около 90 минут. Если принимаете лекарства — скажите врачу."
+  - type: prep
+    question: "Как готовиться к имплантации?"
+    answer: "Подготовку назначает врач на консультации индивидуально. Сначала записываю на консультацию."
+  - type: prep
+    question: "Что нельзя после удаления зуба?"
+    answer: "Первые 2 часа не есть, сутки не курить, не греть место и не полоскать рот. Подробную памятку даст врач."
+    verbatim: true
+  - type: prep
+    question: "Что нельзя после отбеливания?"
+    answer: "Первые 48 часов не пить кофе, чай, вино и не есть красящие продукты."
+    verbatim: true
+  - type: prep
+    question: "Можно ли есть перед чисткой?"
+    answer: "Да, можно. Специальной диеты не требуется."
+  - type: faq
+    question: "Как часто нужна профгигиена?"
+    answer: "Обычно раз в 6 месяцев. Точный интервал скажет врач по состоянию ваших зубов."
+  - type: faq
+    question: "Сколько держится результат чистки?"
+    answer: "Это зависит от ухода и привычек. Врач расскажет на приёме, как продлить результат."
+  - type: faq
+    question: "Больно ли делать чистку?"
+    answer: "Процедуру проводят аккуратно, при чувствительности врач предложит анестезию."
+  - type: faq
+    question: "Исправляете ли прикус у взрослых?"
+    answer: "Да, ортодонт принимает и взрослых. Начинаем с консультации ортодонта."
+  - type: faq
+    question: "Сколько носить брекеты?"
+    answer: "Срок зависит от случая, его называет ортодонт на консультации после осмотра."
+  - type: faq
+    question: "Есть ли прозрачные элайнеры?"
+    answer: "Про варианты выравнивания расскажет ортодонт на консультации — записать вас?"
+  - type: faq
+    question: "Можно ли поставить имплант сразу после удаления?"
+    answer: "Это решает хирург после осмотра и снимка. Записываю на консультацию."
+  - type: faq
+    question: "Сколько длится имплантация?"
+    answer: "Сама операция около 2 часов. План и сроки врач составит на консультации."
+  - type: faq
+    question: "Какие гарантии на имплант?"
+    answer: "Условия гарантии фиксируются в договоре и зависят от системы импланта. Детали — у администратора."
+    verbatim: true
+  - type: faq
+    question: "Можно ли приехать на консультацию без лечения?"
+    answer: "Конечно. Консультация — это осмотр и план, лечиться в тот же день не обязательно."
+  - type: address
+    question: "Как к вам добраться на общественном транспорте?"
+    answer: "Точные ориентиры и остановки подскажет администратор — передам ваш вопрос."
+  - type: faq
+    question: "Есть ли у вас wi-fi и где подождать?"
+    answer: "Да, есть зона ожидания и wi-fi."
+  - type: faq
+    question: "Можно ли записаться на двоих?"
+    answer: "Да, скажите, на какие услуги — подберу время подряд."
+  - type: faq
+    question: "Я писал(а) раньше, вы помните мою историю?"
+    answer: "Да, ваши прошлые записи у меня есть. Подскажу, когда был последний приём."
+  - type: faq
+    question: "Кто будет меня лечить?"
+    answer: "Назову имя врача при записи. Можно выбрать конкретного специалиста."
+  - type: faq
+    question: "Можно ли отменить запись ночью?"
+    answer: "Да, напишите в любое время — я отменю, а администратор увидит утром."
+
+sequences:
+  followup_price:
+    steps:
+      - {offset_h: 1, template: followup_1}
+      - {offset_h: 24, template: followup_2}
+      - {offset_h: 72, template: followup_3}
+    stop_on: [reply, booking, opt_out]
+  recall:
+    steps:
+      - {offset_days: -7, template: recall_invite}
+    stop_on: [booking]

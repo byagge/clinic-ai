@@ -1,0 +1,323 @@
+# Cosmetology clinic template (ТЗ §11).
+meta:
+  code: clinic_cosmetology
+  vertical: clinic
+  title: Косметология
+  rubrics: [косметология, косметологическая клиника, эстетическая медицина, cosmetology, дерматология]
+
+config:
+  currency: KZT
+  quiet_hours: "21:00-09:00"
+  owner_report_at: "08:00"
+  working_hours:
+    mon-sat: "09:00-20:00"
+    sun: "off"
+  agent:
+    tone: коротко, тепло, по делу; без канцелярита и эмодзи-спама
+    slots_to_offer: 3
+    max_confusion: 2
+  features:
+    followup: true
+    recall: true
+    reviews: true
+    waitlist: false
+    miniapp_payments: false
+    treatment_plans: false
+    voice_stt: true
+    doctor_bot: true
+  reminders:
+    visit_offsets_h: [-24, -2]
+    call_task_before_h: 3
+    early_morning_send_at: "08:00"
+  followup:
+    offsets_h: [1, 24, 72]
+    max_touches: 3
+  recall:
+    lead_days: 7
+    dormant_months_from: 9
+    dormant_months_to: 12
+  reviews:
+    delay_h: 2
+    promote_from_score: 5
+    alert_up_to_score: 3
+  handoff:
+    pickup_minutes: 10
+    escalate_minutes: 30
+  red_flags:
+    ru: [сильное жжение после процедуры, отек после инъекции, аллергическая реакция, гнойник, кожа побелела]
+
+services:
+  - code: consult_cosm
+    name: {ru: Консультация косметолога, kz: Косметолог кеңесі}
+    category: Консультации
+    price_from: 5000
+    price_to: 5000
+    duration_min: 30
+    buffer_min: 5
+    online_bookable: true
+    complaint_keywords: [консультация, подобрать уход, не знаю что нужно, осмотр]
+    sort: 1
+  - code: cleaning
+    name: {ru: Чистка лица (комбинированная), kz: Бет тазалау}
+    category: Уход
+    price_from: 18000
+    price_to: 28000
+    duration_min: 90
+    buffer_min: 15
+    recall_days: 45
+    online_bookable: true
+    complaint_keywords: [чистка, черные точки, чёрные точки, забитые поры, жирная кожа]
+    sort: 2
+  - code: peeling
+    name: {ru: Пилинг, kz: Пилинг}
+    category: Уход
+    price_from: 20000
+    price_to: 45000
+    duration_min: 60
+    buffer_min: 15
+    recall_days: 30
+    online_bookable: true
+    complaint_keywords: [пилинг, пигментация, тусклая кожа, постакне, рубцы]
+    sort: 3
+  - code: botox
+    name: {ru: Инъекции ботулотоксина, kz: Ботулотоксин инъекциясы}
+    category: Инъекции
+    price_from: 70000
+    price_to: 160000
+    duration_min: 45
+    buffer_min: 15
+    recall_days: 180
+    needs_consultation_first: true
+    online_bookable: false
+    complaint_keywords: [морщины, ботокс, мимические морщины, лоб, межбровка]
+    sort: 4
+  - code: filler
+    name: {ru: Контурная пластика (филлеры), kz: Контурлық пластика}
+    category: Инъекции
+    price_from: 120000
+    price_to: 280000
+    duration_min: 60
+    buffer_min: 20
+    needs_consultation_first: true
+    online_bookable: false
+    complaint_keywords: [филлеры, губы, носогубные, скулы, объем]
+    sort: 5
+  - code: laser_hair
+    name: {ru: Лазерная эпиляция (зона), kz: Лазерлік эпиляция}
+    category: Аппаратные
+    price_from: 8000
+    price_to: 60000
+    duration_min: 45
+    buffer_min: 10
+    recall_days: 35
+    online_bookable: true
+    complaint_keywords: [эпиляция, лазер, волосы, депиляция, бикини, подмышки]
+    sort: 6
+  - code: mesotherapy
+    name: {ru: Мезотерапия, kz: Мезотерапия}
+    category: Инъекции
+    price_from: 35000
+    price_to: 70000
+    duration_min: 60
+    buffer_min: 15
+    recall_days: 21
+    online_bookable: true
+    complaint_keywords: [мезотерапия, тонус кожи, выпадение волос, увлажнение]
+    sort: 7
+
+doctors:
+  - name: Алия Т.
+    specialty: Врач-косметолог
+    langs: [ru, kz]
+    services: [consult_cosm, cleaning, peeling, mesotherapy]
+    schedule:
+      weekdays: [0, 1, 2, 3, 4, 5]
+      start: "10:00"
+      end: "20:00"
+      break: ["14:00", "15:00"]
+  - name: Жанна М.
+    specialty: Врач-дерматолог, инъекционист
+    langs: [ru]
+    services: [consult_cosm, botox, filler, mesotherapy]
+    schedule:
+      weekdays: [1, 3, 5]
+      start: "11:00"
+      end: "19:00"
+  - name: Сауле Н.
+    specialty: Аппаратная косметология
+    langs: [ru, kz]
+    services: [laser_hair, cleaning]
+    schedule:
+      weekdays: [0, 2, 4, 5]
+      start: "09:00"
+      end: "18:00"
+
+kb:
+  - type: address
+    question: "Где вы находитесь, как добраться?"
+    answer: "Адрес уточняется у администратора. Напишите — подскажу ориентиры и парковку."
+  - type: faq
+    question: "Какие часы работы?"
+    answer: "Пн-сб 10:00-20:00, воскресенье выходной."
+  - type: prep
+    question: "Как готовиться к лазерной эпиляции?"
+    answer: "За 2 недели до процедуры не загорать, не делать воск и шугаринг. За 1-2 дня побрить зону. В день процедуры — без кремов и дезодорантов."
+  - type: prep
+    question: "Как готовиться к пилингу?"
+    answer: "За 3-5 дней не используйте скрабы и кислоты, не загорайте. После процедуры нужен SPF 50 минимум 2 недели."
+  - type: prep
+    question: "Как готовиться к чистке лица?"
+    answer: "Особой подготовки нет. Не планируйте важных встреч в течение суток после — возможно покраснение."
+  - type: policy
+    question: "Можно ли отменить или перенести запись?"
+    answer: "Да, бесплатно, если предупредить минимум за 3 часа. Напишите сюда — перенесу."
+    verbatim: true
+  - type: policy
+    question: "Какие противопоказания к инъекциям?"
+    answer: "Противопоказания определяет только врач на консультации. Беременность, лактацию, обострение хронических болезней и аллергии обязательно обсудите с врачом."
+    verbatim: true
+  - type: faq
+    question: "Есть ли предоплата?"
+    answer: "Предоплата не нужна, оплата после процедуры наличными или картой."
+    verbatim: true
+  - type: faq
+    question: "Нужна ли консультация перед инъекциями?"
+    answer: "Да, инъекционные процедуры назначает врач после консультации. Запишу вас на консультацию."
+  - type: faq
+    question: "Сколько держится результат?"
+    answer: "Длительность результата индивидуальна — это расскажет врач на приёме по вашей ситуации."
+  - type: faq
+    question: "Можно ли летом делать пилинг или лазер?"
+    answer: "Летом процедуры возможны при строгой защите от солнца. Детали обсудит врач на консультации."
+  - type: faq
+    question: "Делаете ли подросткам?"
+    answer: "С 16 лет и только в присутствии родителя. Записывает администратор — передам ему."
+  - type: faq
+    question: "Есть ли парковка?"
+    answer: "Парковка есть, детали уточните у администратора."
+  - type: faq
+    question: "Можно ли оплатить картой?"
+    answer: "Да, принимаем карты и наличные."
+  - type: faq
+    question: "Нужна ли консультация перед чисткой лица?"
+    answer: "Нет, на чистку можно записаться сразу. Косметолог оценит кожу на приёме."
+  - type: faq
+    question: "Сколько стоит консультация косметолога?"
+    answer: "Консультация — 5 000 ₸, 30 минут. Точные цены всегда из прайса."
+  - type: faq
+    question: "Как часто делать чистку лица?"
+    answer: "Обычно раз в 1-2 месяца, точный интервал подберёт косметолог по типу кожи."
+  - type: faq
+    question: "Больно ли делать чистку лица?"
+    answer: "Процедура терпимая, при чувствительной коже используют обезболивающий крем."
+  - type: faq
+    question: "Сколько курсов пилинга нужно?"
+    answer: "Количество процедур назначает врач после осмотра — обычно курсом."
+  - type: faq
+    question: "Можно ли делать процедуры при беременности?"
+    answer: "Многие процедуры в этот период не проводят. Обязательно скажите врачу о беременности — он подберёт безопасный вариант."
+    verbatim: true
+  - type: faq
+    question: "Можно ли при кормлении грудью?"
+    answer: "Это решает врач на консультации, часть процедур придётся отложить."
+    verbatim: true
+  - type: faq
+    question: "Есть ли возрастные ограничения?"
+    answer: "Инъекции — с 18 лет. Уход и чистки — с 16 лет в присутствии родителя."
+    verbatim: true
+  - type: faq
+    question: "Сколько держится эффект ботулотоксина?"
+    answer: "Длительность индивидуальна, врач расскажет на консультации по вашей ситуации."
+  - type: faq
+    question: "Будет ли видно, что я делала инъекции?"
+    answer: "Результат обсуждается с врачом заранее. Он подберёт объём под вашу задачу."
+  - type: faq
+    question: "Можно ли делать филлеры и ботокс в один день?"
+    answer: "Это решает врач на консультации — запишу вас к нему."
+  - type: faq
+    question: "Как подготовиться к инъекциям?"
+    answer: "За сутки не пить алкоголь, не принимать разжижающие кровь препараты без согласования с врачом."
+    verbatim: true
+  - type: prep
+    question: "Что нельзя после инъекций?"
+    answer: "Первые 4 часа не лежать, сутки не заниматься спортом, 2 недели не ходить в баню и сауну."
+    verbatim: true
+  - type: prep
+    question: "Что нельзя после чистки лица?"
+    answer: "Сутки не пользоваться макияжем, 3 дня не загорать и не ходить в сауну."
+    verbatim: true
+  - type: prep
+    question: "Что нельзя после лазерной эпиляции?"
+    answer: "Сутки не греть кожу, 2 недели не загорать, использовать SPF."
+    verbatim: true
+  - type: faq
+    question: "Сколько нужно процедур лазерной эпиляции?"
+    answer: "Обычно курс из нескольких процедур с интервалом. Точное число назовёт специалист после осмотра."
+  - type: faq
+    question: "Лазерная эпиляция делается на любой тип кожи?"
+    answer: "Подходящий режим подбирает специалист на приёме по типу кожи и волос."
+  - type: faq
+    question: "Можно ли делать эпиляцию во время месячных?"
+    answer: "Чувствительность в эти дни выше. Лучше перенести — подобрать другую дату?"
+  - type: faq
+    question: "Есть ли мужской приём?"
+    answer: "Да, принимаем и мужчин. Подскажите услугу — подберу время."
+  - type: faq
+    question: "Нужно ли сдавать анализы?"
+    answer: "Иногда врач просит анализы перед процедурой. Он скажет на консультации."
+  - type: faq
+    question: "Можно ли совместить несколько процедур?"
+    answer: "Да, часть процедур совмещают. План составит врач."
+  - type: faq
+    question: "Делаете ли уход для проблемной кожи?"
+    answer: "Да, косметолог подберёт программу на консультации."
+  - type: faq
+    question: "Выдаёте ли рекомендации по домашнему уходу?"
+    answer: "Да, после процедуры врач даст рекомендации по уходу."
+  - type: faq
+    question: "Можно ли записаться на вечер?"
+    answer: "Да, приём до 20:00. Подобрать вечернее окно?"
+  - type: faq
+    question: "Можно ли с ребёнком прийти?"
+    answer: "Да, в зоне ожидания можно подождать."
+  - type: faq
+    question: "Выдаёте ли чек и договор?"
+    answer: "Да, чек и договор выдаём на приёме."
+  - type: policy
+    question: "Что если я не приду без предупреждения?"
+    answer: "Мы освободим время. При повторных неявках администратор может попросить предоплату."
+    verbatim: true
+  - type: policy
+    question: "Можно ли вернуть деньги?"
+    answer: "Вопросы возврата решает руководитель — передам ваше обращение."
+    verbatim: true
+  - type: faq
+    question: "Можно ли выбрать конкретного специалиста?"
+    answer: "Да, назовите имя — подберу его свободное время."
+  - type: faq
+    question: "Сколько длится приём?"
+    answer: "Консультация 30 минут, чистка 90 минут, инъекции 45-60 минут."
+  - type: faq
+    question: "Я боюсь иголок, что делать?"
+    answer: "Скажите врачу на приёме — он применит анестезирующий крем и объяснит каждый шаг."
+  - type: address
+    question: "Как к вам добраться?"
+    answer: "Точные ориентиры подскажет администратор — передам ваш вопрос."
+  - type: faq
+    question: "Можно ли записаться на двоих?"
+    answer: "Да, скажите услуги — подберу время подряд."
+  - type: faq
+    question: "Можно ли отменить запись ночью?"
+    answer: "Да, напишите в любое время — отменю, администратор увидит утром."
+
+sequences:
+  followup_price:
+    steps:
+      - {offset_h: 1, template: followup_1}
+      - {offset_h: 24, template: followup_2}
+      - {offset_h: 72, template: followup_3}
+    stop_on: [reply, booking, opt_out]
+  recall:
+    steps:
+      - {offset_days: -7, template: recall_invite}
+    stop_on: [booking]
