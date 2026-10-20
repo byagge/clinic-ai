@@ -60,6 +60,10 @@ class VerticalAdapter(Protocol):
 
     name: str
 
+    def playbook(self):
+        """The deterministic dialogue flow for this vertical."""
+        ...
+
     async def handle_button(
         self,
         session: AsyncSession,
@@ -118,7 +122,7 @@ class ConversationRuntime:
     @property
     def brain(self) -> Brain:
         if self._brain is None:
-            self._brain = build_brain()
+            self._brain = build_brain(self.vertical_adapter.playbook())
         return self._brain
 
     # ------------------------------------------------------------------
@@ -439,13 +443,25 @@ class ConversationRuntime:
             if intent.kind == "quick_replies":
                 return [Button(b["text"], b["data"]) for b in intent.payload.get("buttons", [])]
         offered = (conversation.scratch or {}).get("offered_slots") or []
-        if offered:
-            return [
-                Button(f"{slot['time']} · {slot.get('doctor', '')}".strip(" ·"),
-                       f"slot:{slot['slot_key']}")
-                for slot in offered[:3]
-            ]
-        return []
+        buttons: list[Button] = []
+        for slot in offered[:3]:
+            # Clinic offers carry slot_key; an education centre offers trial_key.
+            # A missing key must not drop the whole reply.
+            if slot.get("slot_key"):
+                buttons.append(
+                    Button(
+                        f"{slot['time']} · {slot.get('doctor', '')}".strip(" ·"),
+                        f"slot:{slot['slot_key']}",
+                    )
+                )
+            elif slot.get("trial_key"):
+                buttons.append(
+                    Button(
+                        str(slot.get("when") or "Пробное"),
+                        f"trial:pick:{slot['trial_key']}",
+                    )
+                )
+        return buttons
 
     async def _handle_button(
         self,
@@ -669,9 +685,12 @@ def _state_lines(state: dict, conversation: Conversation) -> list[str]:
     offered = state.get("offered_slots") or []
     if offered:
         rendered = "; ".join(
-            f"{slot.get('when') or slot.get('time')} → {slot.get('slot_key')}" for slot in offered
+            f"{slot.get('when') or slot.get('time')} → "
+            f"{slot.get('slot_key') or slot.get('trial_key')}"
+            for slot in offered
         )
-        lines.append(f"Уже предложенные слоты (slot_key передавай как есть): {rendered}")
+        key_name = "slot_key" if any(slot.get("slot_key") for slot in offered) else "trial_key"
+        lines.append(f"Уже предложенные слоты ({key_name} передавай как есть): {rendered}")
     if conversation.assigned_to != "bot":
         lines.append("Диалог ведёт человек — не отвечай сам.")
     return lines

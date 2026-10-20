@@ -16,6 +16,7 @@ from arix.logging_setup import get_logger
 from arix.scheduler import jobs
 
 from . import booking as bk
+from .playbook import ClinicPlaybook
 from .scheduling import cancel_visit_jobs, schedule_visit_jobs
 from .tools import CLINIC_TOOLS
 
@@ -24,6 +25,9 @@ log = get_logger("arix.clinic")
 
 class ClinicVertical:
     name = "clinic"
+
+    def playbook(self):
+        return ClinicPlaybook()
 
     async def handle_button(
         self,
@@ -153,9 +157,9 @@ class ClinicVertical:
         await session.flush()
 
         if missing:
-            from arix.agent.scripted import _ask_for
+            from arix.agent.scripted import ask_for
 
-            return ButtonOutcome(reply=_ask_for(missing), label="slot_held")
+            return ButtonOutcome(reply=ask_for(missing), label="slot_held")
 
         confirmed = await bk.confirm_visit(session, ctx, visit.id)
         if confirmed is None:

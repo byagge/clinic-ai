@@ -89,9 +89,15 @@ async def test_booking_schedules_reminders(dialogue, tenant):
     await dialogue.say("+7 701 234 56 78")
     await dialogue.say("да")
 
+    from datetime import timedelta
+
+    from arix.core.timeutil import now_utc
     from arix.db.models_core import ScheduledJob
 
     async with tenant_session(tenant) as session:
+        visit = (
+            await session.execute(select(Visit).where(Visit.tenant_id == tenant))
+        ).scalar_one()
         kinds = {
             row.kind
             for row in (
@@ -102,9 +108,14 @@ async def test_booking_schedules_reminders(dialogue, tenant):
                 )
             ).scalars()
         }
-    # A -24h reminder for a next-morning slot is already in the past and is
-    # correctly skipped; see tests/test_scheduling.py for the full matrix.
-    assert {"reminder_2h", "visit_autocomplete", "call_task_admin"} <= kinds
+    # Reminders whose fire time is already in the past are not armed. Which of
+    # them that is depends on the clock: a midday run can book a slot only an
+    # hour away. The full offset matrix lives in tests/test_scheduling.py.
+    assert "visit_autocomplete" in kinds
+    if visit.starts_at - timedelta(hours=2) > now_utc():
+        assert "reminder_2h" in kinds
+    if visit.starts_at - timedelta(hours=3) > now_utc():
+        assert "call_task_admin" in kinds
 
 
 async def test_red_flag_escalates_without_a_diagnosis(dialogue, tenant):
