@@ -14,6 +14,7 @@ from .handlers_core import CORE_HANDLERS
 _handlers: dict[str, Callable[..., Awaitable[dict]]] = dict(CORE_HANDLERS)
 _slot_hint: Callable[..., Awaitable[str | None]] | None = None
 _report_builder: Callable[..., Awaitable[Any]] | None = None
+_daily_arms: list[Callable[..., Awaitable[None]]] = []
 
 
 def register_handlers(handlers: dict[str, Callable[..., Awaitable[dict]]]) -> None:
@@ -28,6 +29,16 @@ def register_slot_hint(provider: Callable[..., Awaitable[str | None]]) -> None:
 def register_report_builder(builder: Callable[..., Awaitable[Any]]) -> None:
     global _report_builder
     _report_builder = builder
+
+
+def register_daily(arm: Callable[..., Awaitable[None]]) -> None:
+    """Vertical-specific jobs armed once a day. ``worker.py`` stays shared."""
+    if arm not in _daily_arms:
+        _daily_arms.append(arm)
+
+
+def daily_arms() -> list[Callable[..., Awaitable[None]]]:
+    return list(_daily_arms)
 
 
 def handler_for(kind: str) -> Callable[..., Awaitable[dict]] | None:
@@ -47,8 +58,10 @@ def report_builder() -> Callable[..., Awaitable[Any]] | None:
 
 
 __all__ = [
+    "daily_arms",
     "handler_for",
     "known_kinds",
+    "register_daily",
     "register_handlers",
     "register_report_builder",
     "register_slot_hint",

@@ -6,7 +6,7 @@
 ## P0 — первая живая проверка (сделать в первую очередь)
 
 - [ ] **P0-1. Запустить `make demo` на машине с Docker и починить всё, что упадёт.**
-  *Как:* `cp .env.example .env && make demo`; смотреть `docker compose logs`. Проверить, что `scripts/init-db.sql` создал роль `arix_app`, что миграция выполнилась под ней и таблицы принадлежат ей, что `GET /health/ready` возвращает `ok: true`. Главный риск — `\set ... \`echo ...\`` в `init-db.sql` и права на таблицы; запасной вариант — создавать роль в отдельном шаге `migrate`. Затем `make eval` и `make test` в контейнере.
+  *Как:* `cp .env.example .env && make demo`; смотреть `docker compose logs`. Проверить, что `scripts/init-db.sh` создал роль `arix_app` (переменные передаются в psql через `-v`, старый вариант с обратными кавычками убран), что миграция выполнилась под ней и таблицы принадлежат ей, что `GET /health/ready` возвращает `ok: true`. Затем `make eval` и `make test` в контейнере. На машине без Docker-демона это ещё не прогонялось.
 - [ ] **P0-2. Проверить Telegram вживую.**
   *Как:* создать бота в @BotFather, поднять туннель (`cloudflared tunnel --url http://localhost:8000`), прописать `PUBLIC_BASE_URL`, `TELEGRAM_SHARED_BOT_TOKEN`, `TELEGRAM_WEBHOOK_SECRET`; `python -m arix.cli connect-telegram --slug demo-dental --token ...`; пройти сценарий из `docs/DEMO.md`. Проверить кнопки слотов, `/today` для сотрудника (добавить себя через `POST /admin/tenants/{id}/staff`), карточку передачи.
 - [ ] **P0-3. Проверить Telegram Business.**
@@ -18,8 +18,8 @@
 
 ## P1 — для пилота (нед. 46)
 
-- [ ] **P1-1. Привести ядро к одному виду с `edu-ai`.**
-  *Как:* в `edu-ai` `agent/scripted.py` разделён на ядро + `Playbook`. Перенести в `clinic-ai`: взять `agent/scripted.py`, `agent/brain.py`, `agent/runtime.py` из `edu-ai`, вынести клинический диалог из старого `scripted.py` в `verticals/clinic/playbook.py` (класс `ClinicPlaybook.respond(turn)`), добавить `def playbook(self)` в `ClinicVertical`. Прогнать `make test` — eval должен остаться 64/64. После этого `scripts/sync-core.sh` работает без ручных правок.
+- [x] **P1-1. Привести ядро к одному виду с `edu-ai`.**
+  Сделано: `agent/scripted.py`, `agent/brain.py`, `agent/runtime.py` совпадают с edu-ai; клинический диалог в `verticals/clinic/playbook.py` (`ClinicPlaybook`). Ежедневные задания клиники ушли из общего воркера в `register_daily`. Проверено: 137 тестов, включая eval 64/64, на детерминированном движке.
 - [ ] **P1-2. Автоматическая анонимизация данных (ТЗ §13, ≤15 раб. дней).**
   *Как:* добавить задание `anonymize_contact`: затирает `name`, `phone`, `attrs`, тексты `messages` и `stt_text` контакта, ставит `anonymized_at`. Ставить его из карточки передачи «Удалить данные» (кнопка в `bots/staff.py`) и в панели. Тест: после выполнения отправка контакту отказывает (`send_message` уже проверяет `anonymized_at`).
 - [ ] **P1-3. Аудит доступа (ТЗ §13).**

@@ -419,15 +419,29 @@ CLINIC_HANDLERS = {
 }
 
 
+async def arm_daily(session, ctx) -> None:
+    """Clinic jobs that are not part of the shared daily set."""
+    from arix.core.timeutil import local_date, now_utc
+    from arix.scheduler.jobs import arm_local
+
+    today = local_date(now_utc(), ctx.tz_name)
+    if ctx.settings.features.recall and today.day == 1:
+        await arm_local(session, ctx, "dormant_invite", "11:00")
+    if ctx.settings.features.treatment_plans:
+        await arm_local(session, ctx, "treatment_plan_nudge", "10:30")
+
+
 def register() -> None:
     """Wire the clinic module into the shared scheduler."""
     from arix.scheduler.registry import (
+        register_daily,
         register_handlers,
         register_report_builder,
         register_slot_hint,
     )
 
     register_handlers(CLINIC_HANDLERS)
+    register_daily(arm_daily)
     register_slot_hint(slot_hint)
     register_report_builder(lambda session, ctx, day: build_daily_report(session, ctx, day))
 

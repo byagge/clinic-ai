@@ -18,7 +18,14 @@ from sqlalchemy import and_, func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from arix.core.timeutil import QuietHours, now_utc, shift_out_of_quiet_hours
+from arix.core.timeutil import (
+    QuietHours,
+    combine_local,
+    local_date,
+    now_utc,
+    parse_hhmm,
+    shift_out_of_quiet_hours,
+)
 from arix.db.models_core import ScheduledJob
 
 #: Jobs that talk to a patient and therefore must respect quiet hours.
@@ -270,10 +277,41 @@ async def queue_health(session: AsyncSession) -> dict:
     return out
 
 
+async def arm_local(
+    session: AsyncSession,
+    ctx,
+    kind: str,
+    at: str,
+    *,
+    day_offset: int = 0,
+    roll_forward: bool = True,
+    dedupe_suffix: str = "",
+) -> bool:
+    """Enqueue one daily job at a tenant-local clock time.
+
+    When the instant has already passed, the job rolls to the next day unless
+    ``roll_forward`` is false (seasonal jobs such as 1 August must not slip).
+    """
+    tz = ctx.tz_name
+    today = local_date(now_utc(), tz)
+    run_at = combine_local(today + timedelta(days=day_offset), parse_hhmm(at), tz)
+    if run_at <= now_utc():
+        if not roll_forward:
+            return False
+        run_at = combine_local(today + timedelta(days=day_offset + 1), parse_hhmm(at), tz)
+    await enqueue(
+        session, ctx.id, kind, run_at,
+        dedupe_key=dedupe(kind, dedupe_suffix or run_at.date().isoformat()),
+        payload={}, timezone=tz, respect_quiet_hours=False,
+    )
+    return True
+
+
 __all__ = [
     "EXEMPT_FROM_QUIET",
     "OUTBOUND_KINDS",
     "JobRequest",
+    "arm_local",
     "cancel",
     "claim_due",
     "dedupe",

@@ -11,9 +11,10 @@
 --    cosmetic: Postgres skips row level security for superusers, so connecting
 --    the app as `postgres` would silently disable the tenant-isolation
 --    policies the migration installs.
+-- app_user and app_password are supplied by scripts/init-db.sh via psql -v.
+-- Do not interpolate them here: a password with quotes or spaces breaks
+-- the old backtick form, and the shell wrapper quotes them safely.
 \set ON_ERROR_STOP on
-\set app_user `echo "${ARIX_APP_USER:-arix_app}"`
-\set app_password `echo "${ARIX_APP_PASSWORD:-arix}"`
 
 CREATE EXTENSION IF NOT EXISTS btree_gist;   -- visits exclusion constraint
 CREATE EXTENSION IF NOT EXISTS pg_trgm;      -- fuzzy knowledge-base search

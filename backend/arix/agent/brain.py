@@ -176,13 +176,24 @@ def _loose_json(raw: str) -> dict:
     return {}
 
 
-def build_brain() -> Brain:
+def build_brain(playbook=None) -> Brain:
+    """Claude when a key is configured, the deterministic brain otherwise.
+
+    ``playbook`` is the vertical's dialogue flow; it is required only for the
+    deterministic path, which is why the vertical passes it in rather than this
+    module importing it (see docs/CORE_SYNC.md).
+    """
     from .scripted import ScriptedBrain
 
     s = get_settings()
     if s.llm_enabled:
         return AnthropicBrain()
-    return ScriptedBrain()
+    if playbook is None:
+        raise RuntimeError(
+            "no ANTHROPIC_API_KEY and no playbook: pass the vertical's playbook "
+            "to build_brain(), or configure a key"
+        )
+    return ScriptedBrain(playbook)
 
 
 __all__ = ["AnthropicBrain", "Brain", "BrainResult", "build_brain"]

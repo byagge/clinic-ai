@@ -15,20 +15,19 @@ import os
 import signal
 import socket
 import uuid
-from datetime import timedelta
 
 from sqlalchemy import select
 
 from arix.config import get_settings
 from arix.core.context import load_context
-from arix.core.timeutil import combine_local, local_date, now_utc, parse_hhmm
+from arix.core.timeutil import local_date, now_utc
 from arix.db.models_core import ScheduledJob, Tenant
 from arix.db.session import admin_session, dispose_engine, tenant_session
 from arix.logging_setup import bind_context, clear_context, get_logger, setup_logging
 from arix.ops import alert_ops
 
 from . import jobs as jobq
-from .registry import handler_for, known_kinds
+from .registry import daily_arms, handler_for, known_kinds
 
 log = get_logger("arix.worker")
 
@@ -161,42 +160,27 @@ class Worker:
                 await self._arm_daily(session, ctx)
 
     async def _arm_daily(self, session, ctx) -> None:
+        """Jobs every vertical shares. Vertical-specific ones register themselves."""
         tz = ctx.tz_name
-        today = local_date(now_utc(), tz)
         quiet = ctx.settings.quiet
 
-        async def arm(kind: str, at: str, *, day_offset: int = 0, dedupe_suffix: str = "") -> None:
-            run_at = combine_local(
-                today + timedelta(days=day_offset), parse_hhmm(at), tz
-            )
-            if run_at <= now_utc():
-                run_at = combine_local(
-                    today + timedelta(days=day_offset + 1), parse_hhmm(at), tz
-                )
-            await jobq.enqueue(
-                session, ctx.id, kind, run_at,
-                dedupe_key=jobq.dedupe(kind, dedupe_suffix or run_at.date().isoformat()),
-                payload={}, timezone=tz, respect_quiet_hours=False,
-            )
-
-        await arm("owner_report", ctx.settings.owner_report_at)
+        await jobq.arm_local(session, ctx, "owner_report", ctx.settings.owner_report_at)
         if quiet:
-            await arm("night_handoff_digest", f"{quiet.end.hour:02d}:{quiet.end.minute:02d}")
-        await arm("resolve_stale_handoffs", "03:30")
-        if ctx.settings.features.recall:
-            # Dormant-base outreach once a month, on the 1st.
-            if local_date(now_utc(), tz).day == 1:
-                await arm("dormant_invite", "11:00")
+            await jobq.arm_local(
+                session, ctx, "night_handoff_digest",
+                f"{quiet.end.hour:02d}:{quiet.end.minute:02d}",
+            )
+        await jobq.arm_local(session, ctx, "resolve_stale_handoffs", "03:30")
         if local_date(now_utc(), tz).day == 1:
-            await arm("wa_quota_check", "09:30")
-        if ctx.settings.features.treatment_plans:
-            await arm("treatment_plan_nudge", "10:30")
+            await jobq.arm_local(session, ctx, "wa_quota_check", "09:30")
         if ctx.tenant.status == "demo" and ctx.tenant.demo_expires_at:
             await jobq.enqueue(
                 session, ctx.id, "demo_expire", ctx.tenant.demo_expires_at,
                 dedupe_key=jobq.dedupe("demo_expire", ctx.id),
                 payload={}, timezone=tz, respect_quiet_hours=False,
             )
+        for arm in daily_arms():
+            await arm(session, ctx)
 
 
 async def _reload(session, job_id: uuid.UUID) -> ScheduledJob | None:
