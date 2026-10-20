@@ -5,8 +5,13 @@
 утро присылает владельцу отчёт.
 
 Это реализация ТЗ «ИИ-менеджер ARIX — ядро + модуль „Клиника“» v1.0.
-Модуль «Учебный центр» живёт в отдельном репозитории (`edu-ai`) на том же ядре,
+Модуль «Учебный центр» живёт в отдельном репозитории (`edu-ai`) на том же ядре (в работе),
 см. [docs/CORE_SYNC.md](docs/CORE_SYNC.md).
+
+> **Статус:** код и автотесты готовы (137 тестов, eval 64/64 на детерминированном движке).
+> Живые каналы (Telegram, WhatsApp/Baileys), Claude API и `docker compose up` **ещё ни разу не
+> запускались** — это первая задача. Подробно: [docs/STATUS.md](docs/STATUS.md),
+> список работ: [docs/TASKS.md](docs/TASKS.md).
 
 ---
 
@@ -113,6 +118,9 @@ Scheduler            arix/scheduler     durable-задания, ретраи, т
 | [docs/OPERATIONS.md](docs/OPERATIONS.md) | прод, миграции, мониторинг, инциденты |
 | [docs/TESTING.md](docs/TESTING.md) | тесты, eval, нагрузка |
 | [docs/CORE_SYNC.md](docs/CORE_SYNC.md) | как ядро делится с `edu-ai` |
+| [docs/STATUS.md](docs/STATUS.md) | **что сделано по ТЗ и что не проверено** |
+| [docs/TASKS.md](docs/TASKS.md) | **список оставшихся задач и как их делать** |
+| [docs/tz/](docs/tz/) | исходные ТЗ (клиника и учебные центры) |
 
 ---
 
